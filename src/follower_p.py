@@ -4,6 +4,7 @@ import rospy, cv2, cv_bridge, numpy
 from sensor_msgs.msg import Image
 from geometry_msgs.msg import Twist
 
+
 class Follower:
   def __init__(self):
     self.bridge = cv_bridge.CvBridge()
@@ -36,7 +37,7 @@ class Follower:
     
       # BEGIN CONTROL
       err = cx - w/2
-      self.twist.linear.x = 0.2
+      self.twist.linear.x = 0.8
       self.twist.angular.z = -float(err) / 100
       self.cmd_vel_pub.publish(self.twist)
       # END CONTROL
