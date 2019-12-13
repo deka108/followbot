@@ -25,6 +25,9 @@ class Follower:
     self.orientation = -1
     self.twist = Twist()
     self.cur_color = color
+    self.red_regions = 0
+    self.move_before_stopping = 0
+    self.stop = False
 
   def image_callback(self, msg):
     image = self.bridge.imgmsg_to_cv2(msg,desired_encoding='bgr8')
@@ -73,112 +76,114 @@ class Follower:
     M_blue = cv2.moments(mask_blue)
     M_red = cv2.moments(mask_red)
 
-    if M_green['m00'] > 0:
-      print("detect green")
-      cx = int(M_green['m10']/M_green['m00'])
-      cy = int(M_green['m01']/M_green['m00'])
-      cv2.circle(image, (cx, cy), 20, (255,0,0), -1)
+    # if M_green['m00'] > 0:
+    #   print("detect green")
+    #   cx = int(M_green['m10']/M_green['m00'])
+    #   cy = int(M_green['m01']/M_green['m00'])
+    #   cv2.circle(image, (cx, cy), 20, (255,0,0), -1)
 
-      err = cx - w/2
-      self.twist.linear.x = 0.4
-      self.twist.angular.z = 0
-      self.cmd_vel_pub.publish(self.twist)
-      self.cur_color = Color.GREEN
+    #   err = cx - w/2
+    #   self.twist.linear.x = 0.4
+    #   self.twist.angular.z = 0
+    #   self.cmd_vel_pub.publish(self.twist)
+    #   self.cur_color = Color.GREEN
 
-    elif M_blue['m00'] > 0:
-      print("detect blue")
-      cx = int(M_blue['m10']/M_blue['m00'])
-      cy = int(M_blue['m01']/M_blue['m00'])
-      cv2.circle(image, (cx, cy), 20, (255,0,0), -1)
+    # elif M_blue['m00'] > 0:
+    #   print("detect blue")
+    #   cx = int(M_blue['m10']/M_blue['m00'])
+    #   cy = int(M_blue['m01']/M_blue['m00'])
+    #   cv2.circle(image, (cx, cy), 20, (0,255,0), -1)
 
-      err = cx - w/2
-      self.twist.linear.x = 0.4
-      self.twist.angular.z = 0
-      self.cmd_vel_pub.publish(self.twist)
-      self.cur_color = Color.BLUE
+    #   err = cx - w/2
+    #   self.twist.linear.x = 0.4
+    #   self.twist.angular.z = 0
+    #   self.cmd_vel_pub.publish(self.twist)
+    #   self.cur_color = Color.BLUE
 
-    elif M_red['m00'] > 0:
-      print("detect red")
-      cx = int(M_red['m10']/M_red['m00'])
-      cy = int(M_red['m01']/M_red['m00'])
-      cv2.circle(image, (cx, cy), 20, (255,0,0), -1)
-
-      err = cx - w/2
-      self.twist.linear.x = 0.4
-      self.twist.angular.z = -float(err) / 100
-      self.cmd_vel_pub.publish(self.twist)
-      self.cur_color = Color.RED
-
-    elif M_yellow['m00'] > 0:
+    if M_yellow['m00'] > 0:
       cx = int(M_yellow['m10']/M_yellow['m00'])
       cy = int(M_yellow['m01']/M_yellow['m00'])
       cv2.circle(image, (cx, cy), 20, (0,0,255), -1)
       
-      if mask_yellow[cy][cx] > 0:
-        # BEGIN CONTROL
-        err = cx - w/2
-        self.twist.linear.x = 0.8
-        self.twist.angular.z = -float(err) / 100
-        self.cmd_vel_pub.publish(self.twist)
-        # END CONTROL
+      # count how many red regions are seen
+      if M_red['m00'] > 0:
+        self.red_regions += 1
+      
+      # completely seen all the red regions
+      if M_red['m00'] == 0 and self.red_regions > 15:
+        self.move_before_stopping += 1
 
+        # move past the red region
+        if self.move_before_stopping > 10:
+          self.stop = True
+
+      if self.stop:
+        self.cmd_vel_pub.publish(Twist())
       else:
-        cnts = cv2.findContours(mask_yellow.copy(), cv2.RETR_EXTERNAL, 
-          cv2.CHAIN_APPROX_SIMPLE)[-2]
-    
-        if len(cnts) > 0:
-          left = None
-          right = None
-
-          # loop over the contours
-          for c in cnts:
-            # compute the center of the contour
-            M = cv2.moments(c)
-            if M["m00"] > 0:
-              cX = int(M["m10"] / M["m00"])
-
-              if left is None:
-                left = cX
-              if right is None:
-                right = cX
-
-              if cX < left:
-                left = cX
-
-              if cX > right:
-                right = cX
-        
-        # choose left center
-        if self.cur_color == Color.GREEN:
-          print("CHOOSE LEFT BLOB")
-          # BEGIN CONTROL
-          err = left - w/2
-          self.twist.linear.x = 0.5
-          self.twist.angular.z = -float(err) / 100
-          self.cmd_vel_pub.publish(self.twist)
-          # END CONTROL
-        elif self.cur_color == Color.BLUE:
-          print("CHOOSE RIGHT BLOB")
-          # BEGIN CONTROL
-          err = right - w/2
-          self.twist.linear.x = 0.5
-          self.twist.angular.z = -float(err) / 100
-          self.cmd_vel_pub.publish(self.twist)
-          # END CONTROL
-        else:
+        if mask_yellow[cy][cx] > 0:
           # BEGIN CONTROL
           err = cx - w/2
           self.twist.linear.x = 0.8
           self.twist.angular.z = -float(err) / 100
           self.cmd_vel_pub.publish(self.twist)
           # END CONTROL
+        else:
+          cnts = cv2.findContours(mask_yellow.copy(), cv2.RETR_EXTERNAL, 
+            cv2.CHAIN_APPROX_SIMPLE)[-2]
+      
+          if len(cnts) > 0:
+            left = None
+            right = None
+
+            # loop over the contours
+            for c in cnts:
+              # compute the center of the contour
+              M = cv2.moments(c)
+              if M["m00"] > 0:
+                cX = int(M["m10"] / M["m00"])
+
+                if left is None:
+                  left = cX
+                if right is None:
+                  right = cX
+
+                if cX < left:
+                  left = cX
+
+                if cX > right:
+                  right = cX
+          
+          # choose left center
+          if self.cur_color == Color.GREEN:
+            print("CHOOSE LEFT BLOB")
+            # BEGIN CONTROL
+            err = left - w/2
+            self.twist.linear.x = 0.5
+            self.twist.angular.z = -float(err) / 100
+            self.cmd_vel_pub.publish(self.twist)
+            # END CONTROL
+          elif self.cur_color == Color.BLUE:
+            print("CHOOSE RIGHT BLOB")
+            # BEGIN CONTROL
+            err = right - w/2
+            self.twist.linear.x = 0.5
+            self.twist.angular.z = -float(err) / 100
+            self.cmd_vel_pub.publish(self.twist)
+            # END CONTROL
+          else:
+            # BEGIN CONTROL
+            err = cx - w/2
+            self.twist.linear.x = 0.8
+            self.twist.angular.z = -float(err) / 100
+            self.cmd_vel_pub.publish(self.twist)
+            # END CONTROL
     
     cv2.imshow("red_mask", mask_red)
     cv2.imshow("yellow_mask", mask_yellow)
     cv2.imshow("window", image)
-    cv2.moveWindow("window", 500, 500) 
-    cv2.moveWindow("yellow_mask", 500, 10)
-    cv2.moveWindow("red_mask", 750, 500)
+    cv2.moveWindow("window", 1000, 50) 
+    cv2.moveWindow("yellow_mask", 1000, 500)
+    cv2.moveWindow("red_mask", 1000, 1000)
     cv2.waitKey(3)
 
 if __name__ == "__main__":
