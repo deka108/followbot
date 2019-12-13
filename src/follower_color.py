@@ -15,8 +15,6 @@ class Follower:
   def __init__(self, color=None):
     self.bridge = cv_bridge.CvBridge()
     cv2.namedWindow("window", 1)
-    cv2.namedWindow("yellow_mask", 2)
-    cv2.namedWindow("red_mask", 2)
 
     self.image_sub = rospy.Subscriber('camera/rgb/image_raw', 
                                       Image, self.image_callback)
@@ -75,30 +73,6 @@ class Follower:
     M_green = cv2.moments(mask_green)
     M_blue = cv2.moments(mask_blue)
     M_red = cv2.moments(mask_red)
-
-    # if M_green['m00'] > 0:
-    #   print("detect green")
-    #   cx = int(M_green['m10']/M_green['m00'])
-    #   cy = int(M_green['m01']/M_green['m00'])
-    #   cv2.circle(image, (cx, cy), 20, (255,0,0), -1)
-
-    #   err = cx - w/2
-    #   self.twist.linear.x = 0.4
-    #   self.twist.angular.z = 0
-    #   self.cmd_vel_pub.publish(self.twist)
-    #   self.cur_color = Color.GREEN
-
-    # elif M_blue['m00'] > 0:
-    #   print("detect blue")
-    #   cx = int(M_blue['m10']/M_blue['m00'])
-    #   cy = int(M_blue['m01']/M_blue['m00'])
-    #   cv2.circle(image, (cx, cy), 20, (0,255,0), -1)
-
-    #   err = cx - w/2
-    #   self.twist.linear.x = 0.4
-    #   self.twist.angular.z = 0
-    #   self.cmd_vel_pub.publish(self.twist)
-    #   self.cur_color = Color.BLUE
 
     if M_yellow['m00'] > 0:
       cx = int(M_yellow['m10']/M_yellow['m00'])
@@ -177,13 +151,9 @@ class Follower:
             self.twist.angular.z = -float(err) / 100
             self.cmd_vel_pub.publish(self.twist)
             # END CONTROL
-    
-    cv2.imshow("red_mask", mask_red)
-    cv2.imshow("yellow_mask", mask_yellow)
+            
     cv2.imshow("window", image)
-    cv2.moveWindow("window", 1000, 50) 
-    cv2.moveWindow("yellow_mask", 1000, 500)
-    cv2.moveWindow("red_mask", 1000, 1000)
+    cv2.moveWindow("window", 1000, 50)
     cv2.waitKey(3)
 
 if __name__ == "__main__":
