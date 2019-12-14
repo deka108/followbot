@@ -19,14 +19,14 @@ class Follower:
     cv2.namedWindow("red_mask", 1)
 
     self.image_sub = rospy.Subscriber('camera/rgb/image_raw', 
-                                      Image, self.image_callback)
+                                      Image, self.image_callback_shape)
     self.cmd_vel_pub = rospy.Publisher('cmd_vel_mux/input/teleop',
                                        Twist, queue_size=1)
     self.orientation = -1
     self.twist = Twist()
     self.stop = False
 
-  def image_callback(self, msg):
+  def image_callback_shape(self, msg):
     image = self.bridge.imgmsg_to_cv2(msg,desired_encoding='bgr8')
     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
   
