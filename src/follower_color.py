@@ -74,7 +74,31 @@ class Follower:
     M_blue = cv2.moments(mask_blue)
     M_red = cv2.moments(mask_red)
 
-    if M_yellow['m00'] > 0:
+    if M_green['m00'] > 0:
+      print("detect green")
+      cx = int(M_green['m10']/M_green['m00'])
+      cy = int(M_green['m01']/M_green['m00'])
+      cv2.circle(image, (cx, cy), 20, (255,0,0), -1)
+
+      err = cx - w/2
+      self.twist.linear.x = 0.4
+      self.twist.angular.z = 0
+      self.cmd_vel_pub.publish(self.twist)
+      self.cur_color = Color.GREEN
+
+    elif M_blue['m00'] > 0:
+      print("detect blue")
+      cx = int(M_blue['m10']/M_blue['m00'])
+      cy = int(M_blue['m01']/M_blue['m00'])
+      cv2.circle(image, (cx, cy), 20, (0,255,0), -1)
+
+      err = cx - w/2
+      self.twist.linear.x = 0.4
+      self.twist.angular.z = 0
+      self.cmd_vel_pub.publish(self.twist)
+      self.cur_color = Color.BLUE
+      
+    elif M_yellow['m00'] > 0:
       cx = int(M_yellow['m10']/M_yellow['m00'])
       cy = int(M_yellow['m01']/M_yellow['m00'])
       cv2.circle(image, (cx, cy), 20, (0,0,255), -1)
