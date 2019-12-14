@@ -37,7 +37,7 @@ class Follower:
     
     h, w, d = image.shape
     search_top = 3*h/4
-    search_bot = 3*h/4 + 40
+    search_bot = 3*h/4 + 50
     
     # erase pixels outside region of interest
     mask_yellow[0:search_top, 0:w] = 0
@@ -72,21 +72,53 @@ class Follower:
       cx = int(M_yellow['m10']/M_yellow['m00'])
       cy = int(M_yellow['m01']/M_yellow['m00'])
       cv2.circle(image, (cx, cy), 20, (0,0,255), -1)
+      
+      cnts = cv2.findContours(mask_yellow.copy(), cv2.RETR_EXTERNAL, 
+        cv2.CHAIN_APPROX_SIMPLE)[-2]
+
+      if M_yellow['m00'] > 2000000:
+        print("area: {} very large area. there's something. center is yellow: {}".format(
+            M_yellow['m00'], mask_yellow[cy][cx] > 0))
+
+      if mask_yellow[cy][cx] == 0:
+        print("area: {}. center is yellow: {}".format(M_yellow['m00'], mask_yellow[cy][cx] > 0))
+
+      for idx, cnt in enumerate(cnts):
+        # calculate number of sides
+        peri = cv2.arcLength(cnt, True) # finds the Contour Perimeter
+        approx = cv2.approxPolyDP(cnt, 0.05 * peri, True)
+        
+        if M_yellow['m00'] > 2000000 and len(approx) > 3:
+            print("#cnts: {}, cnt: {}, #sides: {}, area: {}, center is yellow: {}".format(
+                len(cnts), idx, len(approx), cv2.contourArea(cnt), mask_yellow[cy][cx]))
+        elif mask_yellow[cy][cx] == 0:
+            print("#cnts: {}, cnt: {}, #sides: {}, area: {}, center is yellow: {}".format(
+                len(cnts), idx, len(approx), cv2.contourArea(cnt), mask_yellow[cy][cx]))
 
       if not self.stop:
-        # BEGIN CONTROL
-        err = cx - w/2
-        self.twist.linear.x = 0.8
-        self.twist.angular.z = -float(err) / 100
-        self.cmd_vel_pub.publish(self.twist)
-        # END CONTROL
+        # slow down
+        if len(cnts) > 1:
+            print("slow down")
+            # BEGIN CONTROL
+            err = cx - w/2
+            self.twist.linear.x = 0.3
+            self.twist.angular.z = -float(err) / 100
+            self.cmd_vel_pub.publish(self.twist)
+            # END CONTROL
+        else:
+            # BEGIN CONTROL
+            err = cx - w/2
+            self.twist.linear.x = 0.8
+            self.twist.angular.z = -float(err) / 100
+            self.cmd_vel_pub.publish(self.twist)
+            # END CONTROL
       else:
         self.cmd_vel_pub.publish(Twist())
             
     cv2.imshow("window", image)
     cv2.imshow("yellow_mask", mask_yellow)
     cv2.moveWindow("window", 1200, 50)
-    cv2.moveWindow("yellow_mask", 500, 600)
+    cv2.moveWindow("yellow_mask", 1200, 600)
     
     cv2.waitKey(3)
 
