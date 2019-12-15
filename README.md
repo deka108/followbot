@@ -38,7 +38,7 @@ this input a mask for yellow regions in HSV is applied on a region of the input.
 yellow region is computed using moments of the image and this is used to govern direction of travel.
 
 1. Function `image_callback_color` takes `msg` as a parameter which provides input from the camera. Based of
-this input a mask of red, blue, green and finally yellow is applied. 
+this input a mask of red, blue, green and finally yellow is applied. Below steps describe this approach:
     1. If a color (other than yellow) is detected, we set the cur_color variable to color detected using the mask. 
     1. Once we detect two paths, we use the cur_color information to update the direction (blue => right, green => left) of travel.
     1. The two paths is detected by taking advantage of the color of the centroid when there are diverging paths. During the divergence of two paths 
@@ -46,7 +46,7 @@ this input a mask of red, blue, green and finally yellow is applied.
     1. If cur_color is red, we navigate to the centroid of the red_mask and then halt
 
 1. Function `image_callback_shape` takes `msg` as a parameter which provides input from the camera. Based of this
-input a mask of red, yellow is applied.
+input a mask of red, yellow is applied. Below steps describe this approach:
     1. If red pixels are detected using the red mask, we follow a straight path (angular z =0)
     1. The centroid is computed for the red mask, and the edges the red region in the image are also computed
     1. If the distance from the right most red pixel in the mask to the centroid is greater than the distance
