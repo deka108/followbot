@@ -53,7 +53,7 @@ input a mask of red, yellow is applied. Below steps describe this approach:
      from the left most pixel to the centroid, we set the direction of traversal as right, and vice versa.
      The above method works, since the centroid lies away from the direction the triangle is pointing to.
     1. The direction update is performed when no red pixels are no longer directed
-    1. If no red pixels are detected, follow the centroid of the yellow pixel. Apply #4 if necessary
+    1. If no red pixels are detected, follow the centroid of the yellow pixel. Apply #iv if necessary
     1. To detect a start, we use the property of the area of the image. If the area of the convex hull of
      the red mask is greater than a threshold, we identify the star, move to its centroid and halt the bot.
 
