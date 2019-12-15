@@ -1,3 +1,8 @@
+'''
+This code was written using the follower_p.py, provided in the course notes as 
+reference.
+'''
+
 #!/usr/bin/env python
 # BEGIN ALL
 import rospy, cv2, cv_bridge, numpy
