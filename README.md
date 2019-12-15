@@ -14,7 +14,6 @@ Lab 5 for [COMSW4733 Computational Aspects of Robotics](http://www.cs.columbia.e
 
 1. Installation of ROS on the machine
 1. Installation of `turtlebot gazebo` packagae
-1. Python 3.6 or above needs to be installed in the machine
 
 ----
 ### Usage
@@ -47,15 +46,18 @@ this input a mask of red, blue, green and finally yellow is applied. Below steps
 
 1. Function `image_callback_shape` takes `msg` as a parameter which provides input from the camera. Based of this
 input a mask of red, yellow is applied. Below steps describe this approach:
-    1. If red pixels are detected using the red mask, we follow a straight path (angular z =0)
-    1. The centroid is computed for the red mask, and the edges the red region in the image are also computed
-    1. If the distance from the right most red pixel in the mask to the centroid is greater than the distance
-     from the left most pixel to the centroid, we set the direction of traversal as right, and vice versa.
-     The above method works, since the centroid lies away from the direction the triangle is pointing to.
+    1. If red pixels are detected using the red mask, we determine if the pixels correspond to a triangle or star
+    1. We compute the contours in the red pixel image and try to estimate a polygon which best fits the image. Here
+       we compare the ratio of the area to the perimeter which is significantly different for star and a triangle.
+    1. The centroid is computed for the red mask, and we move towards the centroid.
+    1. Halt when the star is detected
+    1. If the detected red region is a triangle, the distance from of the extreme pixels to the centroid are computed. 
+       If the right most red pixel in the mask to the centroid is greater than the distance from the left most pixel 
+       to the centroid, we set the direction of traversal as right, and vice versa. The above method works, since the 
+       centroid lies away from the direction the triangle is pointing to.
     1. The direction update is performed when no red pixels are no longer directed
-    1. If no red pixels are detected, follow the centroid of the yellow pixel. Apply #iv if necessary
-    1. To detect a start, we use the property of the area of the image. If the area of the convex hull of
-     the red mask is greater than a threshold, we identify the star, move to its centroid and halt the bot.
+    1. If no red pixels are detected, follow the centroid of the yellow pixel. Apply #v if necessary
+
 1. Function `image_callback_extra` takes `msg` as a parameter which provides input from the camera. Based of this
 input a yellow mask is applied. Below are the steps involved in this function:
     1. We apply a yellow filter over a field of view 75 pixels from the bottom of the camera image
@@ -73,6 +75,5 @@ input a yellow mask is applied. Below are the steps involved in this function:
 
 #### Video Link
 
-The run for these implementations is available at https://www.youtube.com/playlist?list=PLMbCjZrjdlPNAQHShtGJahKy7xniH-x88
-This is a single video capturing all the worlds.
+The run for these implementations is available at https://youtu.be/ov1oMKWz5fc. This is a single video capturing all the worlds.
 
