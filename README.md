@@ -56,6 +56,20 @@ input a mask of red, yellow is applied. Below steps describe this approach:
     1. If no red pixels are detected, follow the centroid of the yellow pixel. Apply #iv if necessary
     1. To detect a start, we use the property of the area of the image. If the area of the convex hull of
      the red mask is greater than a threshold, we identify the star, move to its centroid and halt the bot.
+1. Function `image_callback_extra` takes `msg` as a parameter which provides input from the camera. Based of this
+input a yellow mask is applied. Below are the steps involved in this function:
+    1. We apply a yellow filter over a field of view 75 pixels from the bottom of the camera image
+    1. We check if the centroid of this yellow filtered image is a yellow pixel or not, if it isn't this means there
+       are two paths ahead (this is the condition for convergence / divergence of two paths). When a this condition is detected, 
+       we apply a small course adjustment (i.e rotate the bot to a given orientation). The adjustment direction is determined using
+       the below steps.
+    1. If the centroid of the image is yellow (i.e no convergence or divergence of paths), and the edge pixels of the filtered image
+       also happen to be yellow, this means there is a triangle or a star. The direction of the orientation is determined by analyzing
+       the proximity of the pixel to either edge. If the triangle is oriented left, the left edge of the masked image is yellow and
+       vice versa. This is then used to update the course adjustment direction.
+    1. To help determine the difference between the triangle and the star, we use the property that the ratio of the perimeter of the
+       star to the area is significantly different from that of a triangle. Once the star is detected, we move a fixed steps forward
+       and terminate the program execution.
 
 #### Video Link
 
