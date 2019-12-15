@@ -1,80 +1,64 @@
 # Lab 5 - Follow Bot
 Lab 5 for [COMSW4733 Computational Aspects of Robotics](http://www.cs.columbia.edu/~allen/F19/index.html) at Columbia University (Instructor: [Prof. Peter Allen](http://www.cs.columbia.edu/~allen/)).
 
-## Introduction
-In this lab, you are required to make the turtlebot follow a yellow track and action differently at intersections based on visual information. This is simulated in a Gazebo simulator.
+## Authors
 
-## Usage
-This ROS package allows you to load 4 different maps in Gazebo.
+| Name | UNI|
+| - | - |
+| Deka Auliya Akbar | da2897 |
+| Madhavan Seshadri | ms5945 |
+| Shravan Karthik | sk4653 |
 
-### Prerequisites
-The package is tested on `python 2.7`, `ROS Indigo`, `Ubuntu 14.04` with `OpenCV 3.1.0` and `numpy 1.15.1`.
+----
+### Prerequisites:
 
-### Commands
-To launch turtlebot and map for [part 1](#part-1-preparation-20-points)
-```
-roslaunch followbot launch.launch
-```
+1. Installation of ROS on the machine
+1. Installation of `turtlebot gazebo` packagae
+1. Python 3.6 or above needs to be installed in the machine
 
-To launch turtlebot and map for [part 2](#part-2-map-with-color-markers-40-points)
-```
-ROBOT_INITIAL_POSE="-x -2.85 -y -0.27 -Y 1.53" roslaunch followbot launch.launch world_file:=color.world
-```
+----
+### Usage
+1. To run part 1, which implements the navigation of the bot along the yellow line, please use the following commands:
+`roslaunch followbot launch.launch`
+`python src/follower_prep.py`
+1. To run part 2, which implements the navigation of the bot along the obstacle course with color markers, please use the following commands:
+`ROBOT_INITIAL_POSE="-x -2.85 -y -0.27 -Y 1.53" roslaunch followbot launch.launch world_file:=color.world`
+`python src/follower_color.py`
+1. To run part 3 which implements the navigation of the bot along the obstacle course with shape markers, please use the following commands:
+`ROBOT_INITIAL_POSE="-x -2.85 -y -0.27 -Y 1.53" roslaunch followbot launch.launch world_file:=shape.world`
+`python src/follower_shape.py`
+1. To run part 4 which implements the which implements the navigation of the bot along the obstacle course with same color markers, use the following commands:
+`ROBOT_INITIAL_POSE="-x -2.85 -y -0.27 -Y 1.53" roslaunch followbot launch.launch world_file:=extra.world`
+`python src/follower_extra.py`
 
-To launch turtlebot and map for [part 3](#part-3-map-with-shape-markers-40-points)
-```
-ROBOT_INITIAL_POSE="-x -2.85 -y -0.27 -Y 1.53" roslaunch followbot launch.launch world_file:=shape.world
-```
+----
+### Methods in our implementation
+1. Function `image_callback` takes `msg` as a parameter which provides input from the camera. Based of
+this input a mask for yellow regions in HSV is applied on a region of the input. The centroid of the 
+yellow region is computed using moments of the image and this is used to govern direction of travel.
 
-To launch the map for [extra credits](#extra-credits-everything-in-the-same-color-10-points)
-```
-ROBOT_INITIAL_POSE="-x -2.85 -y -0.27 -Y 1.53" roslaunch followbot launch.launch world_file:=extra.world
-```
-## Instructions and Rubric
-Related code for this lab can be found in Chapter 12 of [Programming Robotics with ROS](http://marte.aslab.upm.es/redmine/files/dmsf/p_drone-testbed/170324115730_268_Quigley_-_Programming_Robots_with_ROS.pdf). You should put your scripts under `src/`.
+1. Function `image_callback_color` takes `msg` as a parameter which provides input from the camera. Based of
+this input a mask of red, blue, green and finally yellow is applied. 
+  1. If a color (other than yellow) is detected, we set the cur_color variable to color detected using the mask. 
+  1. Once we detect two paths, we use the cur_color information to update the direction (blue => right, green => left) of travel.
+  1. The two paths is detected by taking advantage of the color of the centroid when there are diverging paths. During the divergence of two paths 
+     the yellow mask center isn't yellow (would be gray). 
+  1. If cur_color is red, we navigate to the centroid of the red_mask and then halt
 
-### Part 1: Preparation (**20 points**)
-Use the command to load the map ([simple.png](worlds/simple.png)) for part 1. You should make the robot follow the yellow track nonstop. You video should show the robot following it for more than 1 round.
+1. Function `image_callback_shape` takes `msg` as a parameter which provides input from the camera. Based of this
+input a mask of red, yellow is applied.
+  1. If red pixels are detected using the red mask, we follow a straight path (angular z =0)
+  1. The centroid is computed for the red mask, and the edges the red region in the image are also computed
+  1. If the distance from the right most red pixel in the mask to the centroid is greater than the distance
+     from the left most pixel to the centroid, we set the direction of traversal as right, and vice versa.
+     The above method works, since the centroid lies away from the direction the triangle is pointing to.
+  1. The direction update is performed when no red pixels are no longer directed
+  1. If no red pixels are detected, follow the centroid of the yellow pixel. Apply #4 if necessary
+  1. To detect a start, we use the property of the area of the image. If the area of the convex hull of
+     the red mask is greater than a threshold, we identify the star, move to its centroid and halt the bot.
 
-<p align="center">
-  <img src="imgs/simple_map.png", height="450">
-</p>
+#### Video Link
 
-### Part 2: Map with color markers (40 points)
-Use the command to load the map ([color.png](worlds/color.png)) for part 2. You should make the robot
-- follow the yellow track when not at an intersection (**10 points**)
-- turn left at the intersection with a green marker(**10 points**)
-- turn right at the intersection with a blue marker (**10 points**)
-- stop exactly on the red marker (**10 points**)
+The run for these implementations is available at https://www.youtube.com/playlist?list=PLMbCjZrjdlPNAQHShtGJahKy7xniH-x88
+This is a single video capturing all the worlds.
 
-<p align="center">
-  <img src="imgs/color_map.png", height="450">
-</p>
-
-### Part 3: Map with shape markers (40 points)
-Use the command to load the map ([shape.png](worlds/shape.png)) for part 3. You should make the robot
-- follow the yellow track when not at an intersection (**10 points**)
-- turn left at the intersection with a triangle marker pointing left (**10 points**)
-- turn right at the intersection with a triangle marker pointing right (**10 points**)
-- stop exactly on the star marker (**10 points**)
-
-<p align="center">
-  <img src="imgs/shape_map.png", height="450">
-</p>
-
-### Extra credits: Everything in the same color (10 points)
-Use the command to load the map ([extra.png](worlds/extra.png)) for the extra credit part. You should make the robot behave the same as part 3. There is no partial credit for this part. You either get 0 or 10.
-
-<p align="center">
-  <img src="imgs/extra_map.png", height="450">
-</p>
-
-## Submission Guidelines
-- You should submit a `lab5_UNI1_UNI2.tar.gz` file which contains the modified package `followbot` that you cloned.
-- It should include all files that we need to reproduce your video demos.
-- You should replace everything in the existing `README.md` with the following sections:
-	- Usage: how to run your code to reproduce your video demos. Clearly explain the functionalities of all added scripts.
-	- Method: a brief description of your methods.
-	- Video: a link to the Youtube video of working demos. You should **concatenate** demo videos of all parts into one single video.
-	- Others: anything else you would like to include
-- **Violation of these submission instructions will result in point deduction.**
