@@ -4,6 +4,7 @@ import rospy, cv2, cv_bridge, numpy
 from sensor_msgs.msg import Image
 from geometry_msgs.msg import Twist
 import argparse
+import numpuy as np
 
 class Color:
   RED = 1
@@ -65,7 +66,7 @@ class Follower:
     mask_yellow[0:search_top, 0:w] = 0
     mask_yellow[search_bot:h, 0:w] = 0
 
-    M_yellow = cv2.moments(mask_yellow, search_top, search_bot)
+    M_yellow = cv2.moments(mask_yellow)
 
     if M_yellow['m00'] > 0:
       cx = int(M_yellow['m10']/M_yellow['m00'])
@@ -74,7 +75,7 @@ class Follower:
       cv2.circle(image, (20, cy), 20, (0,255,0), -1)
       cv2.circle(image, (w-20, cy), 20, (0,255,0), -1)
       
-      predict_dir(mask_yellow)
+      self.predict_dir(mask_yellow, search_top, search_bot)
       cnts = cv2.findContours(mask_yellow.copy(), cv2.RETR_EXTERNAL, 
         cv2.CHAIN_APPROX_SIMPLE)[-2]
 
