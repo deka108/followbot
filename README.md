@@ -39,22 +39,22 @@ yellow region is computed using moments of the image and this is used to govern 
 
 1. Function `image_callback_color` takes `msg` as a parameter which provides input from the camera. Based of
 this input a mask of red, blue, green and finally yellow is applied. 
-  1. If a color (other than yellow) is detected, we set the cur_color variable to color detected using the mask. 
-  1. Once we detect two paths, we use the cur_color information to update the direction (blue => right, green => left) of travel.
-  1. The two paths is detected by taking advantage of the color of the centroid when there are diverging paths. During the divergence of two paths 
+    1. If a color (other than yellow) is detected, we set the cur_color variable to color detected using the mask. 
+    1. Once we detect two paths, we use the cur_color information to update the direction (blue => right, green => left) of travel.
+    1. The two paths is detected by taking advantage of the color of the centroid when there are diverging paths. During the divergence of two paths 
      the yellow mask center isn't yellow (would be gray). 
-  1. If cur_color is red, we navigate to the centroid of the red_mask and then halt
+    1. If cur_color is red, we navigate to the centroid of the red_mask and then halt
 
 1. Function `image_callback_shape` takes `msg` as a parameter which provides input from the camera. Based of this
 input a mask of red, yellow is applied.
-  1. If red pixels are detected using the red mask, we follow a straight path (angular z =0)
-  1. The centroid is computed for the red mask, and the edges the red region in the image are also computed
-  1. If the distance from the right most red pixel in the mask to the centroid is greater than the distance
+    1. If red pixels are detected using the red mask, we follow a straight path (angular z =0)
+    1. The centroid is computed for the red mask, and the edges the red region in the image are also computed
+    1. If the distance from the right most red pixel in the mask to the centroid is greater than the distance
      from the left most pixel to the centroid, we set the direction of traversal as right, and vice versa.
      The above method works, since the centroid lies away from the direction the triangle is pointing to.
-  1. The direction update is performed when no red pixels are no longer directed
-  1. If no red pixels are detected, follow the centroid of the yellow pixel. Apply #4 if necessary
-  1. To detect a start, we use the property of the area of the image. If the area of the convex hull of
+    1. The direction update is performed when no red pixels are no longer directed
+    1. If no red pixels are detected, follow the centroid of the yellow pixel. Apply #4 if necessary
+    1. To detect a start, we use the property of the area of the image. If the area of the convex hull of
      the red mask is greater than a threshold, we identify the star, move to its centroid and halt the bot.
 
 #### Video Link
