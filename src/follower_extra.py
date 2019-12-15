@@ -24,7 +24,29 @@ class Follower:
     self.orientation = -1
     self.twist = Twist()
     self.stop = False
+  def predict_dir(self, mask,start,end):
+    wd = mask.shape[1]
+    wdstart = int(wd/2) - 30
+    wdend = int(wd/2) + 30
+    center = mask[start:end,wdstart:wdend]
+    wdstart = 0
+    wdend = 60
+    left = mask[start:end, wdstart:wdend]
+    wdstart = wd-60
+    wdend = wd
 
+    right = mask[start:end, wdstart:wdend]
+    lc,rc = np.where(center == 0) 
+    ll,rl = np.where(left == 0)
+    lr,rr = np.where(right == 0)
+
+    if len(lc) == 0:
+      print("Not diverging")
+      if len(ll) > 0:
+        print("Turn left")
+      if len(lr) > 0:
+        print("Turn right")
+    
   def image_callback(self, msg):
     image = self.bridge.imgmsg_to_cv2(msg,desired_encoding='bgr8')
     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
@@ -43,31 +65,8 @@ class Follower:
     mask_yellow[0:search_top, 0:w] = 0
     mask_yellow[search_bot:h, 0:w] = 0
 
-    M_yellow = cv2.moments(mask_yellow)
+    M_yellow = cv2.moments(mask_yellow, search_top, search_bot)
 
-    # if M_red['m00'] > 0:
-    #   cnts_red = cv2.findContours(mask_red.copy(), cv2.RETR_EXTERNAL, 
-    #     cv2.CHAIN_APPROX_SIMPLE)[-2]
-    #   cx = int(M_red['m10']/M_red['m00'])
-    #   cy = int(M_red['m01']/M_red['m00'])
-    #   cv2.circle(image, (cx, cy), 20, (255,0,0), -1)
-      
-    #   for idx, cnt in enumerate(cnts_red):
-    #     # calculate number of sides
-    #     peri = cv2.arcLength(cnt, True) # finds the Contour Perimeter
-    #     approx = cv2.approxPolyDP(cnt, 0.05 * peri, True)
-
-    #     if len(approx) > 3:
-    #       print("it might be a star...")
-    #       self.stop = True
-      
-    #   # BEGIN CONTROL
-    #   err = cx - w/2
-    #   self.twist.linear.x = 0.8
-    #   self.twist.angular.z = -float(err) / 100
-    #   self.cmd_vel_pub.publish(self.twist)
-    #   # END CONTROL
-    
     if M_yellow['m00'] > 0:
       cx = int(M_yellow['m10']/M_yellow['m00'])
       cy = int(M_yellow['m01']/M_yellow['m00'])
@@ -75,6 +74,7 @@ class Follower:
       cv2.circle(image, (20, cy), 20, (0,255,0), -1)
       cv2.circle(image, (w-20, cy), 20, (0,255,0), -1)
       
+      predict_dir(mask_yellow)
       cnts = cv2.findContours(mask_yellow.copy(), cv2.RETR_EXTERNAL, 
         cv2.CHAIN_APPROX_SIMPLE)[-2]
 
