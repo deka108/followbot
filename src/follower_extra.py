@@ -51,37 +51,37 @@ class Follower:
     lc,rc = np.where(center == 0) 
     ll,rl = np.where(left == 255)
     lr,rr = np.where(right == 255)
-    magicNum = 60
+    threshSteps = 60
     hitdiv = False
     retval = 0
     if ctclr == 0:
       hitdiv = True
-    if len(ll) > 0 and self.nextChecker > magicNum:
+    if len(ll) > 0 and self.nextChecker > threshSteps:
       self.nextChecker = 0
       self.divergenceChecker = True
       self.moveLeft = True
-    if len(lr) > 0 and self.nextChecker > magicNum:
+    if len(lr) > 0 and self.nextChecker > threshSteps:
       self.nextChecker = 0
       self.divergenceChecker = True
       self.moveRight = True
-    if hitdiv == True and self.divergenceChecker == True and self.nextChecker < magicNum:
-	if self.moveRight:
-          retval = 1
-          self.ctr = self.ctr + 1
-	  print("Adjust slightly to the right")
-	  self.moveRight = False
-          self.nextChecker = 0
-          self.divergenceChecker = False 
-	  self.moveLeft = False
-	if self.moveLeft:
-          retval = 2
-	  print("Adjust slightly to the left")
-          self.ctr = self.ctr + 1
-	  self.moveLeft = False
-	  self.moveRight = False
-          self.divergenceChecker = False 
-          self.nextChecker = 0
-    return retval
+    if hitdiv == True and self.divergenceChecker == True and self.nextChecker < threshSteps:
+	    if self.moveRight:
+        retval = 1
+        self.ctr = self.ctr + 1
+	      print("Adjust slightly to the right")
+	      self.moveRight = False
+        self.nextChecker = 0
+        self.divergenceChecker = False 
+	      self.moveLeft = False
+	    if self.moveLeft:
+        retval = 2
+	      print("Adjust slightly to the left")
+        self.ctr = self.ctr + 1
+	      self.moveLeft = False
+	      self.moveRight = False
+        self.divergenceChecker = False 
+        self.nextChecker = 0
+  return retval
 
   def image_callback(self, msg):
     if self.reachGoal == True:
@@ -95,10 +95,13 @@ class Follower:
     upper_yellow = numpy.array([35, 255, 250])
 
     mask_yellow = cv2.inRange(hsv, lower_yellow, upper_yellow)
+    checkerMatch = 47
     
     h, w, d = image.shape
     search_top = 3*h/4
     search_bot = 3*h/4 + 75
+    stepsForward = 6
+    checkerLimit = 50
     
     # erase pixels outside region of interest
     mask_yellow[0:search_top, 0:w] = 0
@@ -123,14 +126,15 @@ class Follower:
         peri = cv2.arcLength(cnt, True) # finds the Contour Perimeter
         approx = cv2.approxPolyDP(cnt, 0.07 * peri, True)
         
-        if self.nextChecker < 50 and len(approx) == 2 and self.starChecker == True: 
-	  self.starCounter += 1
-          if self.starCounter > 47 and self.ctr > 6:
+        if self.nextChecker < checkerLimit and len(approx) == 2 and self.starChecker == True: 
+	        self.starCounter += 1
+          if self.starCounter > checkerMatch and self.ctr > stepsForward:
        	     print("Reached the destination")
              self.reachGoal = True
+        
         if self.nextChecker > 50:
-	  self.starCounter = 0
-	  self.starChecker = False
+	        self.starCounter = 0
+	        self.starChecker = False
           
 
       for idx, cnt in enumerate(cnts):
