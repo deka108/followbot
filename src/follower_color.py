@@ -116,6 +116,7 @@ class Follower:
           self.stop = True
 
       if self.stop:
+        print("STOP")
         self.cmd_vel_pub.publish(Twist())
       else:
         if mask_yellow[cy][cx] > 0:
@@ -177,7 +178,7 @@ class Follower:
             # END CONTROL
             
     cv2.imshow("window", image)
-    cv2.moveWindow("window", 1000, 50)
+    # cv2.moveWindow("window", 1000, 50)
     cv2.waitKey(3)
 
 if __name__ == "__main__":

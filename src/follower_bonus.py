@@ -37,7 +37,7 @@ class Follower:
     
     h, w, d = image.shape
     search_top = 3*h/4
-    search_bot = 3*h/4 + 50
+    search_bot = 3*h/4 + 75
     
     # erase pixels outside region of interest
     mask_yellow[0:search_top, 0:w] = 0
@@ -72,28 +72,25 @@ class Follower:
       cx = int(M_yellow['m10']/M_yellow['m00'])
       cy = int(M_yellow['m01']/M_yellow['m00'])
       cv2.circle(image, (cx, cy), 20, (0,0,255), -1)
-      cv2.circle(image, (0, cy), 20, (0,255,0), -1)
+      cv2.circle(image, (20, cy), 20, (0,255,0), -1)
+      cv2.circle(image, (w-20, cy), 20, (0,255,0), -1)
       
       cnts = cv2.findContours(mask_yellow.copy(), cv2.RETR_EXTERNAL, 
         cv2.CHAIN_APPROX_SIMPLE)[-2]
-
-      if M_yellow['m00'] > 2500000:
-        print("area: {} very large area. there's something. center is yellow: {}".format(
-            M_yellow['m00'], mask_yellow[cy][cx] > 0))
-      elif mask_yellow[cy][cx] == 0:
-        print("area: {}. center is yellow: {}".format(M_yellow['m00'], mask_yellow[cy][cx] > 0))
 
       for idx, cnt in enumerate(cnts):
         # calculate number of sides
         peri = cv2.arcLength(cnt, True) # finds the Contour Perimeter
         approx = cv2.approxPolyDP(cnt, 0.05 * peri, True)
         
-        if M_yellow['m00'] > 2500000 and len(approx) > 3:
+        if M_yellow['m00'] > 2500000:
+            print("yellow blob area: {}".format(M_yellow['m00']))
             print("#cnts: {}, cnt: {}, #sides: {}, area: {}, center is yellow: {}".format(
-                len(cnts), idx, len(approx), cv2.contourArea(cnt), mask_yellow[cy][cx]))
-        elif mask_yellow[cy][cx] == 0:
-            print("#cnts: {}, cnt: {}, #sides: {}, area: {}, center is yellow: {}".format(
-                len(cnts), idx, len(approx), cv2.contourArea(cnt), mask_yellow[cy][cx]))
+                len(cnts), 
+                idx, 
+                len(approx), 
+                cv2.contourArea(cnt),
+                mask_yellow[cy][cx]))
 
       if not self.stop:
         # slow down

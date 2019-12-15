@@ -15,8 +15,8 @@ class Follower:
   def __init__(self, color=None):
     self.bridge = cv_bridge.CvBridge()
     cv2.namedWindow("window", 1)
-    cv2.namedWindow("yellow_mask", 1)
-    cv2.namedWindow("red_mask", 1)
+    # cv2.namedWindow("yellow_mask", 1)
+    # cv2.namedWindow("red_mask", 1)
 
     self.image_sub = rospy.Subscriber('camera/rgb/image_raw', 
                                       Image, self.image_callback)
@@ -24,6 +24,8 @@ class Follower:
                                        Twist, queue_size=1)
     self.orientation = -1
     self.twist = Twist()
+    self.prev_color = Color.RED
+    self.move_before_stopping = 0
     self.stop = False
 
   def image_callback(self, msg):
@@ -61,24 +63,36 @@ class Follower:
       cx = int(M_red['m10']/M_red['m00'])
       cy = int(M_red['m01']/M_red['m00'])
       cv2.circle(image, (cx, cy), 20, (255,0,0), -1)
+      self.prev_color = Color.RED
       
       for idx, cnt in enumerate(cnts_red):
         # calculate number of sides
         peri = cv2.arcLength(cnt, True) # finds the Contour Perimeter
-        approx = cv2.approxPolyDP(cnt, 0.05 * peri, True)
-
-        if len(approx) > 3:
+        approx = cv2.approxPolyDP(cnt, 0.07 * peri, True)
+        
+        if len(approx) > 2:
+          print(len(approx))
           print("it might be a star...")
-          self.stop = True
+          # add if previous color is red
+          if self.prev_color == Color.RED:
+            self.move_before_stopping += 1
+          # reset indicator if previous color isn't red
+          else:
+            self.move_before_stopping = 1
+          
+          # stop if it sees contigous shapes > 3 more than 15 times
+          if self.move_before_stopping > 15:
+            self.stop = True
       
       # BEGIN CONTROL
       err = cx - w/2
-      self.twist.linear.x = 0.8
+      self.twist.linear.x = 0.4
       self.twist.angular.z = -float(err) / 100
       self.cmd_vel_pub.publish(self.twist)
       # END CONTROL
     
     elif M_yellow['m00'] > 0:
+      self.prev_color = Color.YELLOW
       cx = int(M_yellow['m10']/M_yellow['m00'])
       cy = int(M_yellow['m01']/M_yellow['m00'])
       cv2.circle(image, (cx, cy), 20, (0,0,255), -1)
@@ -91,14 +105,15 @@ class Follower:
         self.cmd_vel_pub.publish(self.twist)
         # END CONTROL
       else:
+        print("STOP")
         self.cmd_vel_pub.publish(Twist())
             
     cv2.imshow("window", image)
-    cv2.imshow("yellow_mask", mask_yellow)
-    cv2.imshow("red_mask", mask_red)
+    # cv2.imshow("yellow_mask", mask_yellow)
+    # cv2.imshow("red_mask", mask_red)
     cv2.moveWindow("window", 1200, 50)
-    cv2.moveWindow("yellow_mask", 500, 600)
-    cv2.moveWindow("red_mask", 1200, 600)
+    # cv2.moveWindow("yellow_mask", 500, 600)
+    # cv2.moveWindow("red_mask", 1200, 600)
     cv2.waitKey(3)
 
 if __name__ == "__main__":
